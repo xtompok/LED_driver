@@ -25,6 +25,7 @@
 #include <libopencm3/stm32/adc.h>
 #include <libopencm3/stm32/dma.h>
 #include <libopencm3/stm32/timer.h>
+#include <libopencm3/stm32/flash.h>
 #include "delay.h"
 #include <stdio.h>
 #include <string.h>
@@ -47,14 +48,40 @@
 #define USART_RX_PIN GPIO3
 #define USART_DE_PIN GPIO1
 
-volatile uint32_t adc_res[ADC_NCHANNELS];
+volatile uint16_t adc_res[ADC_NCHANNELS];
 //volatile uint32_t debug_res[ADC_NCHANNELS] = {1,2,3,4,5,6,7,8};
+uint16_t test_data[] = {0xCC, 0xCC, 0xCC, 0xCC};
 volatile uint32_t n_dmaint;
+
+static void  rcc_clock_setup_in_hse_16mhz_out_48mhz(void)
+ {
+         rcc_osc_on(RCC_HSE);
+         rcc_wait_for_osc_ready(RCC_HSE);
+         rcc_set_sysclk_source(RCC_HSE);
+
+         rcc_set_hpre(RCC_CFGR_HPRE_NODIV);
+         rcc_set_ppre(RCC_CFGR_PPRE_NODIV);
+
+         flash_prefetch_enable();
+         flash_set_ws(FLASH_ACR_LATENCY_024_048MHZ);
+
+         /* PLL: 16MHz * 6 = 48MHz */
+         rcc_set_pll_multiplication_factor(RCC_CFGR_PLLMUL_MUL3);
+         rcc_set_pll_source(RCC_CFGR_PLLSRC_HSE_CLK);
+         rcc_set_pllxtpre(RCC_CFGR_PLLXTPRE_HSE_CLK);
+
+         rcc_osc_on(RCC_PLL);
+         rcc_wait_for_osc_ready(RCC_PLL);
+         rcc_set_sysclk_source(RCC_PLL);
+
+         rcc_apb1_frequency = 48000000;
+         rcc_ahb_frequency = 48000000;
+ }
 
 
 static void clock_setup(void){
 
-//	rcc_clock_setup_in_hse_16mhz_out_48mhz();
+	rcc_clock_setup_in_hse_16mhz_out_48mhz();
 	rcc_periph_clock_enable(RCC_GPIOA);
 	rcc_periph_clock_enable(RCC_GPIOB);
 	rcc_periph_clock_enable(RCC_USART1);
@@ -113,7 +140,7 @@ static void gpio_setup(void)
 static void timer_setup(void)
 {
 	timer_set_mode(TIM3, TIM_CR1_CKD_CK_INT, TIM_CR1_CMS_EDGE, TIM_CR1_DIR_UP);
-	timer_set_prescaler(TIM3, 4);
+	timer_set_prescaler(TIM3, 1);
 	timer_set_period(TIM3, 1000);
 //	timer_disable_preload(TIM3);
 	timer_enable_preload(TIM3);
@@ -129,7 +156,7 @@ static void timer_setup(void)
 	timer_enable_oc_preload(TIM3, TIM_OC1);
 	timer_enable_oc_preload(TIM3, TIM_OC2);
 	timer_enable_oc_preload(TIM3, TIM_OC4);
-	timer_set_oc_value(TIM3, TIM_OC1, 128);	
+	timer_set_oc_value(TIM3, TIM_OC1, 500);	
 	timer_set_oc_value(TIM3, TIM_OC2, 500);	
 	timer_set_oc_value(TIM3, TIM_OC4, 500);	
 	timer_set_oc_polarity_high(TIM3, TIM_OC1);
@@ -155,7 +182,7 @@ static void adc_setup(void)
 
 	adc_set_operation_mode(ADC1, ADC_MODE_SEQUENTIAL);
 	adc_disable_external_trigger_regular(ADC1);
-	adc_set_sample_time_on_all_channels(ADC1, ADC_SMPTIME_071DOT5);
+	adc_set_sample_time_on_all_channels(ADC1, ADC_SMPTIME_239DOT5);
 
 	adc_set_right_aligned(ADC1);
 
@@ -167,23 +194,24 @@ static void adc_setup(void)
 	adc_set_regular_sequence(ADC1, ADC_NCHANNELS, adc_channels);
 	adc_disable_analog_watchdog(ADC1);
 	
-	/*
 	// ADC DMA start
+	adc_set_continuous_conversion_mode(ADC1);
 	adc_set_operation_mode(ADC1,ADC_MODE_SCAN_INFINITE);
 
 	adc_disable_discontinuous_mode(ADC1);
+	adc_enable_eoc_sequence_interrupt(ADC1);
 
-	adc_enable_dma_circular_mode(DMA1);
-//	adc_enable_dma(DMA1);
+
+	adc_enable_dma_circular_mode(ADC1);
+	adc_enable_dma(ADC1);
 	// ADC DMA end
-*/
+
 	adc_power_on(ADC1);
 	delay(10);
 	// ADC DMA start
-//	adc_start_conversion_regular(ADC1);
+	adc_start_conversion_regular(ADC1);
 	return;
 /*
-	adc_set_single_conversion_mode(ADC1);
 
 //	delay(100);
 //	
@@ -192,8 +220,10 @@ static void adc_setup(void)
 
 static uint16_t calculate_temperature(uint16_t vcc, uint16_t temp_val){
 	#define TEMP30_CAL_ADDR ((uint16_t*) ((uint32_t) 0x1FFFF7B8))
-	temp_val = (*TEMP30_CAL_ADDR - temp_val)*1000;
-	temp_val = (temp_val / 4300)+30;
+	#define VDD_CALIB ((uint32_t) 3300)
+	#define AVG_SLOPE ((uint32_t) 4300)
+	temp_val = (*TEMP30_CAL_ADDR - (temp_val*vcc/VDD_CALIB))*1000;
+	temp_val = (temp_val / AVG_SLOPE)+30;
 	return temp_val;
 }
 
@@ -209,30 +239,36 @@ static uint16_t calculate_voltage(uint16_t adc_val){
 }
 
 static void dma_setup(void){
-	dma_disable_channel(DMA1,DMA_CHANNEL1);
+	adc_power_off(ADC1);
+	dma_channel_reset(DMA1, DMA_CHANNEL1);
 
-	dma_set_priority(DMA1, DMA_CHANNEL1, DMA_CCR_PL_VERY_HIGH);
-
-	dma_enable_circular_mode(DMA1, DMA_CHANNEL1);
+	dma_set_peripheral_address(DMA1, DMA_CHANNEL1, (uint32_t) &ADC_DR(ADC1));
+	dma_set_memory_address(DMA1, DMA_CHANNEL1, (uint32_t) &adc_res);
 	dma_enable_memory_increment_mode(DMA1, DMA_CHANNEL1);
- 
 	dma_set_peripheral_size(DMA1, DMA_CHANNEL1, DMA_CCR_PSIZE_16BIT);
 	dma_set_memory_size(DMA1, DMA_CHANNEL1, DMA_CCR_MSIZE_16BIT);
- 
-	dma_set_read_from_peripheral(DMA1, DMA_CHANNEL1);
-	dma_set_peripheral_address(DMA1, DMA_CHANNEL1, (uint32_t) &ADC_DR(ADC1));
- 
-	dma_set_memory_address(DMA1, DMA_CHANNEL1, (uint32_t) &adc_res);
+	dma_set_priority(DMA1, DMA_CHANNEL1, DMA_CCR_PL_LOW);
+
+	dma_enable_transfer_complete_interrupt(DMA1, DMA_CHANNEL1);
 	dma_set_number_of_data(DMA1, DMA_CHANNEL1, ADC_NCHANNELS);
+	dma_enable_circular_mode(DMA1, DMA_CHANNEL1);
+	dma_set_read_from_peripheral(DMA1, DMA_CHANNEL1);
+
+//	dma_enable_mem2mem_mode(DMA1, DMA_CHANNEL1);
+//	dma_disable_peripheral_increment_mode(DMA1, DMA_CHANNEL1);
  
-//	dma_enable_transfer_complete_interrupt(DMA1, DMA_CHANNEL1);
 	dma_enable_channel(DMA1, DMA_CHANNEL1);
+//	adc_enable_dma(DMA1);
 }
 
-/*void dma1_channel1_isr(void) {
+void dma1_channel1_isr(void) {
 	dma_clear_interrupt_flags(DMA1, DMA_CHANNEL1, DMA_IFCR_CGIF1);
 	n_dmaint++;
-}*/
+}
+
+void adc_comp_isr(void){
+	n_dmaint++;
+}
 
 
 static void rs485_send_blocking(char c){
@@ -266,8 +302,8 @@ int main(void)
 	usart_setup();
 	delay_setup();
 	timer_setup();
-	adc_setup();
 	dma_setup();
+	adc_setup();
 	delay(100);
 
 		char str[20];
@@ -294,45 +330,55 @@ int main(void)
 
 		rs485_send_blocking('\n');
 
+
+		/*
+		for (int i=0; i<4; i++){
+			snprintf(str,20,"adc%d: %5d, ",i,adc_res[i]);
+			rs485_send_str_blocking(str);
+
+		}
+		
+		snprintf(str,20,"adc: %5d, int: %d",ADC_DR(ADC1),n_dmaint);
+		rs485_send_str_blocking(str);
+		snprintf(str,20,"ovr:%d ",adc_get_overrun_flag(ADC1));
+		rs485_send_str_blocking(str);
+		adc_clear_overrun_flag(ADC1);
+		snprintf(str,20,"ovr:%d ",adc_get_overrun_flag(ADC1));
+		rs485_send_str_blocking(str);
+		adc_clear_overrun_flag(ADC1);*/
+
 		uint16_t current;
 		uint16_t vled;
 		uint16_t temperature;
 		uint16_t v_mcu;
 
-		adc_start_conversion_regular(ADC1);
-		while (!(adc_eoc(ADC1)));
-		current = adc_read_regular(ADC1);
-		current = 3300 * current / 4095;
-
-		snprintf(str,20,"current: %d ",current);
-		rs485_send_str_blocking(str);
-
-		adc_start_conversion_regular(ADC1);
-		while (!(adc_eoc(ADC1)));
-		vled = adc_read_regular(ADC1);
-		vled = 25500 * (3300*vled/4095)/1500;
-
-		snprintf(str,20,"V_led: %d ",vled);
-		rs485_send_str_blocking(str);
-
-		adc_start_conversion_regular(ADC1);
-		while (!(adc_eoc(ADC1)));
-		temperature = adc_read_regular(ADC1);
-		temperature = calculate_temperature(v_mcu, temperature);
-
-		snprintf(str,20,"temperature: %d ",temperature);
-		rs485_send_str_blocking(str);
-		
-
-		adc_start_conversion_regular(ADC1);
-		while (!(adc_eoc(ADC1)));
-		v_mcu = adc_read_regular(ADC1);
+		v_mcu = adc_res[3];
 		//snprintf(str,20,"3V3_raw: %d ",v_mcu);
 		//rs485_send_str_blocking(str);
 		v_mcu = calculate_voltage(v_mcu);
 
 		snprintf(str,20,"3V3: %d ",v_mcu);
 		rs485_send_str_blocking(str);
+
+		current = adc_res[0];
+		current = 333 * v_mcu * current / 4095 / 50;
+
+		snprintf(str,20,"current: %d ",current);
+		rs485_send_str_blocking(str);
+
+		vled = adc_res[1];
+		vled = 25500 * (v_mcu*vled/4095)/1500;
+
+		snprintf(str,20,"V_led: %d ",vled);
+		rs485_send_str_blocking(str);
+
+		temperature = adc_res[2];
+		temperature = calculate_temperature(v_mcu, temperature);
+
+		snprintf(str,20,"temperature: %d ",temperature);
+		rs485_send_str_blocking(str);
+		
+
 
 		rs485_send_blocking('\n');
 	
