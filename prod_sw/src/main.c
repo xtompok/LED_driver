@@ -6,6 +6,7 @@
 #include "config.h"
 #include "timer.h"
 #include "modbus.h"
+#include "adc.h"
  
 
 static void rcc_clock_setup_in_hse_16mhz_out_48mhz(void)
@@ -72,30 +73,28 @@ static void clock_setup(void){
 
 }
 
+static void irq_setup(void){
+	nvic_enable_irq(NVIC_DMA1_CHANNEL1_IRQ);
+}
+
 int main(void){
 	clock_setup();
 	systick_setup();
 	gpio_setup();
 	timer_setup();
+	irq_setup();
+	dma_setup();
+	adc_setup();
 
 	modbus_init();
-
-	set_pwm0(100);
-	set_pwm1(100);
-	set_pwm2(100);
-
+	
 	//TODO:
-	// - ADC
+	// - calculate current
 	// - on/off coil register
 	
 	
 
 	while (1){
-		//gpio_toggle(IO0_PORT, IO0_PIN);
-		//delay(1000);
-		//set_pwm0(1000);
-		//delay(1000);
-		//set_pwm0(100);
 		modbus_loop();
 
 	}	

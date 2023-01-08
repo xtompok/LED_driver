@@ -3,6 +3,7 @@
 
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/cm3/nvic.h>
+#include <libopencm3/stm32/adc.h>
 
 #define IO0_PORT	GPIOA
 #define IO0_PIN		GPIO5
@@ -14,6 +15,25 @@
 #define PIN_O2		GPIO7
 #define PORT_O3		GPIOB
 #define PIN_O3		GPIO1
+
+#define AD_TEMP_INT_IDX		2
+#define AD_VREF_INT_IDX		3
+
+#define ADC_TEMP_V25            1430
+#define ADC_TEMP_SLOPE          43
+
+#define AD_I_IN_PORT		GPIOA
+#define AD_I_IN_PIN		GPIO0
+#define AD_I_IN_CH		0
+#define AD_I_IN_IDX		0
+#define AD_I_IN_RES		4
+
+#define AD_V_IN_PORT		GPIOA
+#define AD_V_IN_PIN		GPIO4
+#define AD_V_IN_CH		4
+#define AD_V_IN_IDX		1
+#define AD_V_IN_RES_HIGH	24000
+#define AD_V_IN_RES_LOW		1500
 
 #define ADC_PORT	GPIOA
 #define ADC_I_PIN	GPIO0

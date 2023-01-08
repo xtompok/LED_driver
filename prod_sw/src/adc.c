@@ -5,11 +5,17 @@
 #include "adc.h"
 #include "time.h"
 
+volatile uint16_t adc_res[ADC_NCHANNELS*ADC_AVG_WINDOW];
+volatile uint16_t adc_res_avg[ADC_NCHANNELS];
 
-volatile uint16_t adc_res[ADC_NCHANNELS];
-uint8_t adc_channels[] = {0,4, ADC_CHANNEL_TEMP, ADC_CHANNEL_VREF};
+uint16_t adc_temp_int;
+uint16_t adc_3V3_v = 3300;
+uint16_t adc_vin_v;
+uint16_t adc_vin_i;
 
-static void adc_setup(void)
+uint8_t adc_channels[] = {AD_I_IN_CH, AD_V_IN_CH, ADC_CHANNEL_TEMP, ADC_CHANNEL_VREF};
+
+void adc_setup(void)
 {
 	adc_power_off(ADC1);
 
@@ -50,7 +56,7 @@ static void adc_setup(void)
 	adc_start_conversion_regular(ADC1);
 }
 
-static uint16_t calculate_temperature(uint16_t vcc, uint16_t temp_val){
+static uint16_t calc_temp(uint16_t vcc, uint16_t temp_val){
 	#define TEMP30_CAL_ADDR ((uint16_t*) ((uint32_t) 0x1FFFF7B8))
 	#define VDD_CALIB ((uint32_t) 3300)
 	#define AVG_SLOPE ((uint32_t) 4300)
@@ -59,7 +65,11 @@ static uint16_t calculate_temperature(uint16_t vcc, uint16_t temp_val){
 	return temp_val;
 }
 
-static uint16_t calculate_voltage(uint16_t adc_val){
+static inline uint32_t calc_voltage(uint16_t adc_val){
+    return ((uint32_t)adc_val)*adc_3V3_v/4096;
+}
+
+static uint16_t calc_3V3_voltage(uint16_t adc_val){
 	#define  VREFINT_CAL_ADDR ((uint16_t*)((uint32_t)0x1FFFF7BA))
 
 	uint16_t vrefint_cal;                        // VREFINT calibration value
@@ -70,7 +80,7 @@ static uint16_t calculate_voltage(uint16_t adc_val){
 	return voltage;
 }
 
-static void dma_setup(void){
+void dma_setup(void){
 	adc_power_off(ADC1);
 	dma_channel_reset(DMA1, DMA_CHANNEL1);
 
@@ -82,7 +92,7 @@ static void dma_setup(void){
 	dma_set_priority(DMA1, DMA_CHANNEL1, DMA_CCR_PL_LOW);
 
 	dma_enable_transfer_complete_interrupt(DMA1, DMA_CHANNEL1);
-	dma_set_number_of_data(DMA1, DMA_CHANNEL1, ADC_NCHANNELS);
+	dma_set_number_of_data(DMA1, DMA_CHANNEL1, ADC_NCHANNELS*ADC_AVG_WINDOW);
 	dma_enable_circular_mode(DMA1, DMA_CHANNEL1);
 	dma_set_read_from_peripheral(DMA1, DMA_CHANNEL1);
 
@@ -93,9 +103,34 @@ static void dma_setup(void){
 //	adc_enable_dma(DMA1);
 }
 
+
+static void adc_process_raw(void){
+	adc_3V3_v = calc_3V3_voltage(adc_res_avg[AD_VREF_INT_IDX]);//((uint32_t)1200)*4096 / adc_res_avg[AD_VREF_INT_IDX];
+
+	adc_temp_int = calc_temp(adc_3V3_v,adc_res_avg[AD_TEMP_INT_IDX]);
+
+	uint16_t volt;
+	volt = calc_voltage(adc_res_avg[AD_V_IN_IDX]);
+	adc_vin_v = (((uint32_t)volt)*(AD_V_IN_RES_HIGH+AD_V_IN_RES_LOW))/AD_V_IN_RES_LOW;
+
+	adc_vin_i = adc_res_avg[AD_I_IN_IDX];
+
+}
+
 void dma1_channel1_isr(void) {
+	uint32_t temp;
+	for (int ch=0;ch<ADC_NCHANNELS; ch++){
+		temp = 0;
+		for (int i=0; i<ADC_AVG_WINDOW; i++){
+			temp += adc_res[i*ADC_NCHANNELS + ch];   
+		}
+		temp /= ADC_AVG_WINDOW;
+		adc_res_avg[ch] = temp;
+	}
+	adc_process_raw();
+	//dma_clear_interrupt_flags(DMA1,DMA_CHANNEL1,DMA_TCIF);
 	dma_clear_interrupt_flags(DMA1, DMA_CHANNEL1, DMA_IFCR_CGIF1);
-	//n_dmaint++;
+
 }
 
 void adc_comp_isr(void){

@@ -2,6 +2,7 @@
 #include "config.h"
 #include "timer.h"
 #include "time.h"
+#include "adc.h"
 
 bool modbus_check_discrete_input(u16 addr){
 	(void)addr;
@@ -46,15 +47,13 @@ bool modbus_check_input_register(u16 addr){
 u16 modbus_get_input_register(u16 addr){
 	switch (addr){
 		case MODBUS_BASE_VIN_REG:
-			return UINT16_MAX;
+			return adc_vin_v;
 		case MODBUS_BASE_IIN_REG:
-			return UINT16_MAX;
+			return adc_vin_i;
 		case MODBUS_BASE_3V3_REG:
-//			return adc_3V3_v;
-			return UINT16_MAX;
+			return adc_3V3_v;
 		case MODBUS_BASE_TEMPINT_REG:
-//			return adc_temp_int;
-			return UINT16_MAX;
+			return adc_temp_int;
 	}
 	return 0;
 }
