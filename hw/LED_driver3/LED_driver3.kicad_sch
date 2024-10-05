@@ -12436,6 +12436,24 @@
 				(hide yes)
 			)
 		)
+		(property "LCSC" "C5123972"
+			(at 193.04 217.17 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "JLCPCB_CORRECTION" "0;0;270"
+			(at 193.04 217.17 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "4"
 			(uuid "d149eadc-ded9-445b-a458-9a6f3708d38f")
 		)
@@ -12965,6 +12983,15 @@
 				(hide yes)
 			)
 		)
+		(property "LCSC" "C2286"
+			(at 66.04 114.3 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "38f53a13-f29c-428a-8ce2-c28ce3b2df0e")
 		)
@@ -13155,7 +13182,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "10k7"
+		(property "Value" "10k"
 			(at 267.97 275.5899 0)
 			(effects
 				(font
@@ -13183,6 +13210,15 @@
 			)
 		)
 		(property "Description" "Resistor"
+			(at 265.43 274.32 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "LCSC" "C25804"
 			(at 265.43 274.32 0)
 			(effects
 				(font
@@ -13682,6 +13718,15 @@
 			)
 		)
 		(property "Description" ""
+			(at 45.72 114.3 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "LCSC" "C2286"
 			(at 45.72 114.3 0)
 			(effects
 				(font
@@ -14924,6 +14969,15 @@
 				(hide yes)
 			)
 		)
+		(property "LCSC" "C21189"
+			(at 354.33 110.49 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "62e7a98b-a9de-4ec7-b0f5-49d9f8506622")
 		)
@@ -15281,7 +15335,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC" "C72043"
+		(property "LCSC" "C2286"
 			(at 26.67 114.3 90)
 			(effects
 				(font
@@ -16664,7 +16718,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC" "    C728340"
+		(property "LCSC" "C728340"
 			(at 314.96 110.49 0)
 			(effects
 				(font
@@ -17496,6 +17550,24 @@
 				(hide yes)
 			)
 		)
+		(property "LCSC" "C5123972"
+			(at 193.04 255.27 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "JLCPCB_CORRECTION" "0;0;270"
+			(at 193.04 255.27 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "4"
 			(uuid "495f06b5-7ac8-475f-8da1-7b7d5d44f678")
 		)
@@ -18104,6 +18176,15 @@
 				(hide yes)
 			)
 		)
+		(property "JLCPCB_CORRECTION" "0;0;270"
+			(at 81.28 176.53 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "53e2bdf0-ec51-4895-9943-4f0585648b17")
 		)
@@ -18407,6 +18488,15 @@
 				(hide yes)
 			)
 		)
+		(property "LCSC" "C4216"
+			(at 265.43 257.81 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "e913925f-a40c-44b0-b1ed-ee595c6b2483")
 		)
@@ -18620,6 +18710,15 @@
 				(hide yes)
 			)
 		)
+		(property "LCSC" "C2286"
+			(at 320.04 85.09 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "3"
 			(uuid "b2fca6db-68ac-4786-a622-cdb15cb41d92")
 		)
@@ -18706,6 +18805,15 @@
 			)
 		)
 		(property "Description" "Resistor"
+			(at 265.43 219.71 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "LCSC" "C22807"
 			(at 265.43 219.71 0)
 			(effects
 				(font
@@ -19956,7 +20064,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "10k7"
+		(property "Value" "10k"
 			(at 267.97 236.2199 0)
 			(effects
 				(font
@@ -19984,6 +20092,15 @@
 			)
 		)
 		(property "Description" "Resistor"
+			(at 265.43 234.95 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "LCSC" "C25804"
 			(at 265.43 234.95 0)
 			(effects
 				(font
@@ -21073,6 +21190,15 @@
 			)
 		)
 		(property "LCSC" "C192764"
+			(at 331.47 110.49 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "JLCPCB_CORRECTION" "0;0;270"
 			(at 331.47 110.49 0)
 			(effects
 				(font
@@ -22685,6 +22811,15 @@
 				(hide yes)
 			)
 		)
+		(property "LCSC" "C2286"
+			(at 57.15 114.3 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "4d01c7b3-825a-4105-a53f-2e9de772f054")
 		)
@@ -23331,6 +23466,15 @@
 			)
 		)
 		(property "Description" ""
+			(at 36.83 114.3 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "LCSC" "C2286"
 			(at 36.83 114.3 0)
 			(effects
 				(font
