@@ -1,0 +1,32 @@
+{
+	"configurations": [
+		{
+			"showDevDebugOutput": "parsed",
+			"cwd": "${workspaceRoot}",
+			"executable": "./build/sspa_gate_driver.elf",
+			"name": "Debug STM32",
+			"request": "launch",
+			"type": "cortex-debug",
+			"servertype": "openocd",
+			"xpreLaunchTask": "Build STM",
+			"device": "stm32g070",
+			"configFiles": [
+				"openocd.cfg"
+			]
+		},
+		{
+			"showDevDebugOutput": "parsed",
+			"cwd": "${workspaceRoot}",
+			"executable": "./build/sspa_gate_driver.elf",
+			"name": "Attach STM32",
+			"request": "attach",
+			"type": "cortex-debug",
+			"servertype": "openocd",
+			"xpreLaunchTask": "Build STM",
+			"device": "stm32g070",
+			"configFiles": [
+				"openocd.cfg"
+			]
+		}
+	]
+}
